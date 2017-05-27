@@ -1,0 +1,233 @@
+<html>
+<head>
+  <base href="/">
+  <title>Conversation Chat App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta property="og:image" content="conversation.svg" />
+  <meta property="og:title" content="Conversation Chat Simple" />
+  <meta property="og:description" content="Sample application that shows how to use the Conversation API to identify user intents" />
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.1/css/font-awesome.min.css" />
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+
+  <script src="jquery.min.js"></script>
+  <script src="materialize.min.js"></script>
+
+
+  <style type="text/css">
+
+
+    body{
+      font-family: verdana;
+    }
+    #result{
+      height: 200px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      box-shadow: 0 0 10px 0 #bbb;
+      margin-bottom: 30px;
+      font-size: 14px;
+      line-height: 25px;
+    }
+    button{
+      font-size: 20px;
+      position: absolute;
+      top: 240px;
+      left: 50%;
+    }
+
+  </style>
+</head>
+<body >
+  <div id="view-change-button" class="button" onclick="PayloadPanel.togglePanel(event, this)">
+    <img  class="option full" src="../img/Chat Button.png">
+    <img class="option not-full" src="../img/Code Button.png">
+  </div>
+  <div  id="contentParent" class="responsive-columns-wrapper">
+    <div  id="chat-column-holder" class="responsive-column content-column">
+      <div class="chat-column">
+        <div id="scrollingChat"></div>
+        <label for="textInput" class="inputOutline">
+          <input id="textInput" class="input responsive-column"
+            placeholder="Type something" type="text" onKeyup="edValueKeyPress()"
+            onkeydown="ConversationPanel.inputKeyDown(event, this) ">
+          <br>
+          <span style="display:none;" id="lblValue">The text box contains:</span>
+        </label>
+      </div>
+    </div>
+
+    <div  id="payload-column" class="fixed-column content-column">
+      <div id="payload-initial-message">
+        Type something to see the output
+      </div>
+      <div id="payload-request" class="payload"></div>
+      <div id="payload-response" class="payload"></div>
+    </div>
+
+
+
+
+
+
+    <div style="display: none" class="container">
+
+      <form class="col s8 offset-s2">
+
+        <div  class="row">
+          <div class="col s6">
+            <label>Rate</label>
+            <p class="range-field">
+              <input type="range" id="rate" min="1" max="100" value="10" />
+            </p>
+          </div>
+          <div class="col s6">
+            <label>Pitch</label>
+            <p class="range-field">
+              <input type="range" id="pitch" min="0" max="2" value="1" />
+            </p>
+          </div>
+          <div class="col s12">
+            <p>N.B. Rate and Pitch only work with native voice.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s12">
+            <textarea id="message" class="materialize-textarea"></textarea>
+            <label>Write message</label>
+          </div>
+        </div>
+        <a href="#" id="speak" class="waves-effect waves-light btn">Speak</a>
+      </form>
+    </div>
+
+
+
+
+
+
+  </div>
+
+
+  <!--<div id="result"></div>-->
+  <button style="margin-top:32%;margin-left:15%;" onclick="startConverting();"><i class="fa fa-microphone"></i></button>
+  <script type="text/javascript">
+
+    var r = document.getElementById('textInput');
+
+
+    function startConverting () {
+      if('webkitSpeechRecognition' in window){
+        var speechRecognizer = new webkitSpeechRecognition();
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+        speechRecognizer.lang = 'en-IN';
+        speechRecognizer.start();
+
+        var finalTranscripts = '';
+
+        speechRecognizer.onresult = function(event){
+          var interimTranscripts = '';
+          for(var i = event.resultIndex; i < event.results.length; i++){
+            var transcript = event.results[i][0].transcript;
+            transcript.replace("\n", "<br>");
+            if(event.results[i].isFinal){
+              finalTranscripts += transcript;
+            }else{
+              interimTranscripts += transcript;
+            }
+          }
+          r.value = finalTranscripts  + interimTranscripts  ;
+
+        };
+        speechRecognizer.onerror = function (event) {
+        };
+      }else{
+        r.value = 'Your browser is not supported. If google chrome, please upgrade!';
+      }
+    }
+
+
+
+
+    function edValueKeyPress()
+    {
+      var edValue = document.getElementById("textInput");
+      var s = edValue.value;
+
+      var lblValue = document.getElementById("lblValue");
+      lblValue.innerText = s;
+
+      //var s = $("#edValue").val();
+      //$("#lblValue").text(s);
+    }
+
+    $(document).keypress(function (e) {
+      var lblValue = document.getElementById("lblValue");
+
+
+      if (e.which == 13) {
+//        alert(lblValue.innerText);
+        $('#speak').click();
+        $(function() {
+          if ('speechSynthesis' in window) {
+            speechSynthesis.onvoiceschanged = function () {
+              var $voicelist = $('#voices');
+
+              if ($voicelist.find('option').length == 0) {
+                speechSynthesis.getVoices().forEach(function (voice, index) {
+                  console.log(voice);
+                  var $option = $('<option>')
+                          .val(index)
+                          .html(voice.name + (voice.default ? ' (default)' : ''));
+
+                  $voicelist.append($option);
+                });
+                $voicelist.material_select();
+              }
+            }
+
+            $('#speak').click(function () {
+              var text = lblValue.innerText;
+              var msg = new SpeechSynthesisUtterance();
+              var voices = window.speechSynthesis.getVoices();
+              msg.voice = voices[65]; //voices[$('#voices').val()];
+              msg.rate = 1; //$('#rate').val() / 10;
+              msg.pitch = 1; //$('#pitch').val();
+              msg.text = text;
+
+              msg.onend = function (e) {
+                console.log('Finished in ' + event.elapsedTime + ' seconds.');
+              };
+
+              console.log(speechSynthesis);
+
+              speechSynthesis.speak(msg);
+            })
+          } else {
+            $('#modal1').openModal();
+          }
+          //});
+
+
+        })
+      }
+    });
+
+
+
+
+
+
+
+  </script>
+
+  <script src="js/common.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/conversation.js"></script>
+  <script src="js/payload.js"></script>
+  <script src="js/global.js"></script>
+</body>
+</html>
