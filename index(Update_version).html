@@ -1,0 +1,524 @@
+<html>
+<head>
+  <base href="/">
+  <title>Conversation Chat App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta property="og:image" content="conversation.svg" />
+  <meta property="og:title" content="Conversation Chat Simple" />
+  <meta property="og:description" content="Sample application that shows how to use the Conversation API to identify user intents" />
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.1/css/font-awesome.min.css" />
+  <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
+
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/materialize/0.95.1/css/materialize.min.css">
+
+  <link href="css/modal-box.css" rel="stylesheet" type="text/css">
+
+  <style type="text/css">
+
+
+    body{
+      font-family: verdana;
+
+    }
+    html,p,h1{
+      color: white;
+    }
+
+    #result{
+      height: 200px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      box-shadow: 0 0 10px 0 #bbb;
+      margin-bottom: 30px;
+      font-size: 14px;
+      line-height: 25px;
+    }
+    button{
+      font-size: 20px;
+      position: absolute;
+      top: 240px;
+      left: 50%;
+    }
+
+    .setting{
+
+      position:absolute;
+      width:15%;
+      height:50%;
+      top:25%;
+    }
+    .setting_inner{
+      width:100%;
+
+      height:100%;
+
+    }
+    .dropdownlist{
+      width:100%;
+      display:block;
+      background-color: black;
+      height:10%;
+
+
+    }
+    .dropdownlist option{
+
+
+    }
+
+    .record_button{
+      margin-top:31%;
+      margin-left:12%
+    }
+
+    @media screen and (max-width: 960px)
+    {
+      body{
+
+
+      }
+      .record_button{
+        margin-top:90%;
+        margin-left:35%
+      }
+
+      .dropdownlist{
+        display:none;
+      }
+
+
+    }
+
+
+
+
+
+
+
+  </style>
+</head>
+<body >
+
+
+  <div id="view-change-button" class="button" onclick="PayloadPanel.togglePanel(event, this)">
+    <img  class="option full" src="../img/Chat Button.png">
+    <img class="option not-full" src="../img/Code Button.png">
+  </div>
+  <div  id="contentParent" class="responsive-columns-wrapper">
+    <div  id="chat-column-holder" class="responsive-column content-column">
+      <div style="background-color: rgba(0,0,10,.75); " class="chat-column">
+        <div   id="scrollingChat"></div>
+        <label  for="textInput" class="inputOutline">
+          <input  id="textInput" class="input responsive-column"
+            placeholder="Type something" type="text" onKeyup="edValueKeyPress()"
+            onkeydown="ConversationPanel.inputKeyDown(event, this) ">
+          <br>
+          <span style="display:none;" id="lblValue">The text box contains:</span>
+        </label>
+      </div>
+    </div>
+
+
+
+    <div style="display:none" id="payload-column" class="fixed-column content-column">
+      <div id="payload-initial-message">
+        Type something to see the output
+      </div>
+      <div  id="payload-request" class="payload"></div>
+      <div id="payload-response" class="payload"></div>
+    </div>
+
+
+
+
+
+
+
+    <div style="display:none; width:30%;" class="container">
+
+      <form class="col s8 offset-s2">
+
+        <div  class="row">
+          <div class="col s6">
+            <label>Rate</label>
+            <p class="range-field">
+              <input type="range" id="rate" min="1" max="100" value="10" />
+            </p>
+          </div>
+          <div class="col s6">
+            <label>Pitch</label>
+            <p class="range-field">
+              <input type="range" id="pitch" min="0" max="2" value="1" />
+            </p>
+          </div>
+          <div class="col s12">
+            <p>N.B. Rate and Pitch only work with native voice.</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s12">
+            <textarea  id="message" class="materialize-textarea"></textarea>
+            <label>Write message</label>
+          </div>
+        </div>
+        <a href="#" id="speak" class="waves-effect waves-light btn">Speak</a>
+      </form>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="setting">
+    <div class="setting_inner">
+
+      <select id="dropdownlist" class="dropdownlist" onchange="dropdown()">
+        <option value="Default">Choose Size</option>
+        <option value="Big">Big</option>
+        <option value="Medium">Medium</option>
+        <option value="Small">Small</option>
+      </select>
+
+
+    </div>
+  </div>
+
+
+
+  <!-- new product  -->
+  <div id="newProductModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+
+      <center><img src="http://tshop.pointto.us/Hackathon/modal-box/HS_statment.png" alt=""></center>
+
+    </div>
+
+
+  </div><!-- end new product  -->
+
+
+  <!--<div id="result"></div>-->
+  <img>
+  <button class="record_button"   onclick="startConverting();"><i class="fa fa-microphone"></i></button>
+  <script type="text/javascript">
+
+    var r = document.getElementById('textInput');
+
+
+
+//    $(function () {
+//      var dropdownlist = document.getElementById("dropdownlist");
+//      alert(dropdownlist.value);
+//
+//
+//
+//
+//    }
+
+//    <option value="Default">Choose Size</option>
+//    <option value="Big">Big</option>
+//            <option value="Medium">Medium</option>
+//            <option value="Small">Small</option>
+
+    function dropdown(){
+
+      var dropdownlist = document.getElementById("dropdownlist").value;
+      if(dropdownlist == "Big")
+      {
+        $(".message-inner").css("font-size","2vw");
+        $(".message-inner").css("line-height","4vh");
+        $(".chat-column").css("max-width","40rem");
+        $("#textInput").css("font-size","2vw");
+
+        $(".record_button").css("margin-left","20.5%");
+
+
+
+      }
+      if(dropdownlist == "Medium")
+      {
+        $(".message-inner").css("font-size","1.7vw");
+        $(".message-inner").css("line-height","3vh");
+        $(".chat-column").css("max-width","30rem");
+        $("#textInput").css("font-size","1.7vw");
+        $(".record_button").css("margin-left","14.5%");
+      }
+      if(dropdownlist == "Small")
+      {
+        $(".message-inner").css("font-size","1.4vw");
+        $(".message-inner").css("line-height","2vh");
+        $(".chat-column").css("max-width","25rem");
+        $("#textInput").css("font-size","1.4vw");
+        $(".record_button").css("margin-left","11.8%");
+      }
+    }
+
+
+
+    $(function () {
+
+
+      if ('speechSynthesis' in window) {
+          var text = "Welcome! Can I help you?";
+          var msg = new SpeechSynthesisUtterance();
+          var voices = window.speechSynthesis.getVoices();
+          msg.voice = voices[$('#voices').val()];
+          msg.rate = $('#rate').val() / 10;
+          msg.pitch = $('#pitch').val();
+          msg.text = text;
+
+          msg.onend = function (e) {
+            console.log('Finished in ' + event.elapsedTime + ' seconds.');
+          };
+          console.log(speechSynthesis);
+          speechSynthesis.speak(msg);
+      }
+      else {
+        $('#modal1').openModal();
+
+      }
+
+    })
+
+
+    function startConverting () {
+      if('webkitSpeechRecognition' in window){
+        var speechRecognizer = new webkitSpeechRecognition();
+        speechRecognizer.continuous = true;
+        speechRecognizer.interimResults = true;
+        speechRecognizer.lang = 'en-IN';
+        speechRecognizer.start();
+
+        var finalTranscripts = '';
+
+        speechRecognizer.onresult = function(event){
+          var interimTranscripts = '';
+          for(var i = event.resultIndex; i < event.results.length; i++){
+            var transcript = event.results[i][0].transcript;
+            transcript.replace("\n", "<br>");
+            if(event.results[i].isFinal){
+              finalTranscripts += transcript;
+            }else{
+              interimTranscripts += transcript;
+            }
+          }
+          r.value = finalTranscripts  + interimTranscripts  ;
+
+        };
+        speechRecognizer.onerror = function (event) {
+        };
+      }else{
+        r.value = 'Your browser is not supported. If google chrome, please upgrade!';
+      }
+    }
+
+//
+//    function myFunction() {
+//      setTimeout(function(){
+//        console.log(document.getElementById("payload-response").value);
+//
+//
+//      }, 500);
+//    }
+
+
+
+    function edValueKeyPress()
+    {
+      var edValue = document.getElementById("textInput");
+      var s = edValue.value;
+
+      var lblValue = document.getElementById("lblValue");
+      lblValue.innerText = s;
+
+
+      //var s = $("#edValue").val();
+      //$("#lblValue").text(s);
+    }
+
+
+
+    $("#textInput").keypress(function (e) {
+      var text_to_speech = document.getElementById("payload-response");
+
+      var lblValue = document.getElementById("lblValue");
+      var flag = false;
+
+      console.log("123");
+      if (e.which == 13) {
+
+        document.getElementById("message").innerHTML = lblValue.innerHTML;
+
+//          setTimeout(function () {
+//            if ('speechSynthesis' in window) {
+//
+//              if (flag == false) {
+//                var text = document.getElementById("message").innerHTML;
+//                var msg = new SpeechSynthesisUtterance();
+//                var voices = window.speechSynthesis.getVoices();
+//                msg.voice = voices[$('#voices').val()];
+//                msg.rate = $('#rate').val() / 10;
+//                msg.pitch = $('#pitch').val();
+//                msg.text = text;
+//
+//                msg.onend = function (e) {
+//                  console.log('Finished in ' + event.elapsedTime + ' seconds.');
+//                };
+//
+//                console.log(speechSynthesis);
+//
+//                speechSynthesis.speak(msg);
+//
+//
+//              }
+//            }
+//            else {
+//              $('#modal1').openModal();
+//
+//            }
+//          },200)
+
+
+        setTimeout(function () {
+
+          var abc = text_to_speech;
+          var abc= text_to_speech.getElementsByClassName("string")[2].innerHTML;
+
+          if ('speechSynthesis' in window) {
+
+            if (flag == false) {
+              var text = abc;
+              var msg = new SpeechSynthesisUtterance();
+              var voices = window.speechSynthesis.getVoices();
+              msg.voice = voices[$('#voices').val()];
+              msg.rate = $('#rate').val() / 10;
+              msg.pitch = $('#pitch').val();
+              msg.text = text;
+
+              msg.onend = function (e) {
+                console.log('Finished in ' + event.elapsedTime + ' seconds.');
+              };
+
+              console.log(speechSynthesis);
+
+              speechSynthesis.speak(msg);
+
+
+
+            }
+          }
+          else {
+            $('#modal1').openModal();
+
+          }
+        },1000)
+
+
+
+
+
+
+//
+//          $(function() {
+//            if ('speechSynthesis' in window) {
+//              speechSynthesis.onvoiceschanged = function () {
+//                var $voicelist = $('#voices');
+//                if ($voicelist.find('option').length == 0) {
+//                  speechSynthesis.getVoices().forEach(function (voice, index) {
+//                    console.log(voice);
+//                    var $option = $('<option>')
+//                            .val(index)
+//                            .html(voice.name + (voice.default ? ' (default)' : ''));
+//
+//
+//                    $voicelist.append($option);
+//                  });
+//                $voicelist.material_select();
+//                }
+//
+//
+//              }
+
+//              $('#speak').click(function () {
+//
+//
+//
+//              })
+//            }
+            //});
+
+
+//          )}
+
+
+
+
+
+
+
+
+//        alert(lblValue.innerText);
+
+
+      }
+    });
+
+
+
+
+
+
+
+
+
+
+  </script>
+
+
+  <script>
+
+    // new product modal
+    // Get the modal
+    //var modal = document.getElementById('newProductModal');
+
+    // Get the button that opens the modal
+    //var btn_show_modal = document.getElementById("showModal");
+
+    var modal = document.getElementById('newProductModal');
+    // When the user clicks the button, open the modal
+    function pic(){
+    //}
+
+    //btn_show_modal.onclick = function () {
+      modal.style.display = "block";
+
+    }
+
+    // When the user clicks on <span> (x), close the modal
+    function closeFunction() {
+      modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    }
+
+  </script>
+
+
+  <script src="js/common.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/conversation.js"></script>
+  <script src="js/payload.js"></script>
+  <script src="js/global.js"></script>
+</body>
+</html>
